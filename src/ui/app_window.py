@@ -1,11 +1,10 @@
-from src.ui.formularios import FormularioValidacion
-
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from src.ui.formularios import FormularioRegistroCliente
 
-# Importamos nuestro motor y validadores
 from src.automata.escaner import EscanerTexto
 from src.automata.validadores.validador_correo import ValidadorCorreo
+from src.automata.validadores.validador_password import ValidadorPassword
 from src.automata.validadores.validador_fecha import ValidadorFecha
 from src.automata.validadores.validador_placa import ValidadorPlaca
 from src.automata.validadores.validador_telefono import ValidadorTelefono
@@ -18,157 +17,235 @@ from src.automata.validadores.validador_documento import ValidadorDocumentoNIT
 class AutoRegexApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("AutoRegex TLF - Validador de Patrones")
-        self.root.geometry("900x650")
-        self.root.minsize(700, 550)
-        self.root.configure(bg="#f4f5f7")
+        self.root.title("DriveTech - Plataforma de Alquiler de Vehículos")
+        self.root.geometry("950x750")
+        self.root.minsize(800, 650)
+        self.bg_main = "#f0f2f5"
+        self.root.configure(bg=self.bg_main)
 
-        # Inicializamos el motor de autómatas
         self.inicializar_motor()
-
         self.configurar_estilos()
 
+        header = tk.Frame(self.root, bg="#1e293b", height=60)
+        header.pack(fill='x', side='top')
+        tk.Label(header, text="DRIVETECH RENTAL | Panel Administrativo",
+                 font=("Segoe UI", 14, "bold"), bg="#1e293b", fg="white").pack(pady=15)
+
         self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(expand=True, fill='both', padx=25, pady=25)
+        self.notebook.pack(expand=True, fill='both', padx=30, pady=20)
 
-        self.tab_textos = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_textos, text="   📄 Escáner de Textos   ")
-        self.construir_tab_textos()
+        # Pestaña 1: Registro
+        self.tab_registro = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_registro, text="  👤 Nuevo Registro de Cliente  ")
+        self.construir_tab_registro()
 
-        self.tab_formularios = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_formularios, text="   📝 Formulario Interactivo   ")
-        self.construir_tab_formularios()
+        # Pestaña 2: Escáner
+        self.tab_auditoria = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_auditoria, text="  📋 Auditoría de Contratos  ")
+        self.construir_tab_auditoria()
+
+        # Pestaña 3: Laboratorio de Pruebas
+        self.tab_tester = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_tester, text="  🧪 Laboratorio de Autómatas  ")
+        self.construir_tab_tester()
 
     def inicializar_motor(self):
-        """Carga en memoria todos los autómatas sin usar librerías predefinidas."""
-        mis_validadores = {
-            "Correos Electrónicos": ValidadorCorreo(),
-            "Fechas (DD/MM/AAAA)": ValidadorFecha(),
-            "Placas (Autos/Motos)": ValidadorPlaca(),
+        # Mantenemos el diccionario para el escáner y el laboratorio
+        self.validadores_instancias = {
+            "Correo de Contacto": ValidadorCorreo(),
+            "Contraseñas Seguras": ValidadorPassword(),
+            "Fechas": ValidadorFecha(),
+            "Placas de Vehículo": ValidadorPlaca(),
             "Teléfonos": ValidadorTelefono(),
-            "Direcciones URL": ValidadorURL(),
-            "Direcciones IPv4": ValidadorIP(),
+            "URLs": ValidadorURL(),
+            "Direcciones IP": ValidadorIP(),
             "Valores Monetarios": ValidadorMoneda(),
-            "Documentos y NIT": ValidadorDocumentoNIT()
+            "Identidad (CC/NIT)": ValidadorDocumentoNIT()
         }
-        self.escaner = EscanerTexto(mis_validadores)
+        self.escaner = EscanerTexto(self.validadores_instancias)
 
     def configurar_estilos(self):
-        # (El mismo código de estilos que ya teníamos)
         style = ttk.Style()
         style.theme_use('clam')
-        bg_color = "#f4f5f7"
-        card_bg = "#ffffff"
-        accent_color = "#4f46e5"
-        accent_hover = "#4338ca"
-        text_color = "#1f2937"
+        style.configure("TNotebook", background=self.bg_main, borderwidth=0)
+        style.configure("TNotebook.Tab", font=("Segoe UI", 10, "bold"), padding=[20, 10],
+                        background="#cbd5e1", foreground="#334155", borderwidth=0)
+        style.map("TNotebook.Tab", background=[("selected", "white")], foreground=[("selected", "#0f172a")])
+        style.configure("TButton", font=("Segoe UI", 10, "bold"), background="#2563eb", foreground="white", padding=8,
+                        borderwidth=0)
+        style.map("TButton", background=[("active", "#1d4ed8")])
+        style.configure("TLabelframe", background="white", font=("Segoe UI", 11, "bold"), foreground="#1e293b",
+                        borderwidth=1, bordercolor="#cbd5e1", relief="solid")
+        style.configure("TLabelframe.Label", background="white", foreground="#2563eb")
 
-        style.configure("TFrame", background=bg_color)
-        style.configure("TNotebook", background=bg_color, borderwidth=0)
-        style.configure("TNotebook.Tab", font=("Segoe UI", 11, "bold"), padding=[15, 8],
-                        background="#e5e7eb", foreground=text_color, borderwidth=0)
-        style.map("TNotebook.Tab", background=[("selected", card_bg)], foreground=[("selected", accent_color)])
-        style.configure("TLabelframe", background=card_bg, font=("Segoe UI", 11, "bold"),
-                        foreground=text_color, borderwidth=1, bordercolor="#d1d5db", relief="solid")
-        style.configure("TLabelframe.Label", background=card_bg, foreground=accent_color)
-        style.configure("TButton", font=("Segoe UI", 10, "bold"), background=accent_color,
-                        foreground="white", padding=10, borderwidth=0)
-        style.map("TButton", background=[("active", accent_hover)])
-        style.configure("TLabel", font=("Segoe UI", 11), background=bg_color, foreground=text_color)
+    def construir_tab_registro(self):
+        frame_fondo = tk.Frame(self.tab_registro, bg="white")
+        frame_fondo.pack(fill='both', expand=True, padx=2, pady=2)
+        tk.Label(frame_fondo, text="Alta de Cliente y Asignación de Vehículo", font=("Segoe UI", 16, "bold"),
+                 bg="white", fg="#0f172a").pack(pady=(25, 5))
+        tk.Label(frame_fondo,
+                 text="El sistema validará estrictamente los datos para autorizar la reserva del vehículo.",
+                 font=("Segoe UI", 10), bg="white", fg="#64748b").pack(pady=(0, 20))
+        self.frame_campos = tk.Frame(frame_fondo, bg="white")
+        self.frame_campos.pack(fill='both', expand=True, padx=40, pady=10)
+        self.formulario = FormularioRegistroCliente(self.frame_campos)
 
-    def construir_tab_textos(self):
-        """Construye la interfaz para la búsqueda de patrones en textos y archivos."""
-        frame_input = ttk.LabelFrame(self.tab_textos, text=" Texto a analizar ")
+    def construir_tab_auditoria(self):
+        frame_input = ttk.LabelFrame(self.tab_auditoria, text=" Procesar Documento/Contrato ")
         frame_input.pack(fill='both', expand=True, padx=20, pady=(20, 10))
-
-        # === NUEVO: Marco para agrupar los botones en la parte superior ===
-        frame_botones_top = tk.Frame(frame_input, bg="#ffffff")
+        frame_botones_top = tk.Frame(frame_input, bg="white")
         frame_botones_top.pack(fill='x', padx=15, pady=(15, 0))
-
-        self.btn_cargar = ttk.Button(frame_botones_top, text="📂 Cargar Archivo (.txt)",
-                                     command=self.cargar_archivo)
-        self.btn_cargar.pack(side='left')
-
-        # Campo de texto
-        self.txt_entrada = tk.Text(frame_input, height=8, wrap='word',
-                                   font=("Segoe UI", 11), bg="#ffffff", fg="#1f2937",
-                                   relief="flat", highlightthickness=1, highlightbackground="#d1d5db")
+        ttk.Button(frame_botones_top, text="📂 Importar Contrato (.txt)", command=self.cargar_archivo).pack(side='left')
+        self.txt_entrada = tk.Text(frame_input, height=8, wrap='word', font=("Segoe UI", 10), bg="#f8fafc",
+                                   fg="#1e293b", relief="solid", borderwidth=1, highlightthickness=0)
         self.txt_entrada.pack(fill='both', expand=True, padx=15, pady=(10, 15))
-
-        # Botón de acción centrado
-        self.btn_escanear = ttk.Button(self.tab_textos, text="🔍 Iniciar Escaneo de Patrones",
-                                       command=self.procesar_texto)
-        self.btn_escanear.pack(pady=5)
-
-        frame_output = ttk.LabelFrame(self.tab_textos, text=" Resultados de la Extracción ")
+        ttk.Button(self.tab_auditoria, text="🔍 Extraer Datos Críticos del Documento", command=self.procesar_texto).pack(
+            pady=5)
+        frame_output = ttk.LabelFrame(self.tab_auditoria, text=" Reporte de Patrones Detectados ")
         frame_output.pack(fill='both', expand=True, padx=20, pady=(10, 20))
-
-        self.txt_salida = tk.Text(frame_output, height=8, state='disabled',
-                                  font=("Consolas", 11), bg="#f9fafb", fg="#374151",
-                                  relief="flat", highlightthickness=1, highlightbackground="#e5e7eb")
+        self.txt_salida = tk.Text(frame_output, height=8, state='disabled', font=("Consolas", 10), bg="#f1f5f9",
+                                  fg="#334155", relief="solid", borderwidth=1, highlightthickness=0)
         self.txt_salida.pack(fill='both', expand=True, padx=15, pady=15)
 
+    def construir_tab_tester(self):
+        frame_fondo = tk.Frame(self.tab_tester, bg="white")
+        frame_fondo.pack(fill='both', expand=True, padx=2, pady=2)
+
+        tk.Label(frame_fondo, text="Modo Pruebas (Unit Testing Visual)", font=("Segoe UI", 16, "bold"), bg="white",
+                 fg="#0f172a").pack(pady=(25, 5))
+        tk.Label(frame_fondo,
+                 text="Selecciona un autómata y prueba cadenas individuales. Recibirás un diagnóstico de fallos.",
+                 font=("Segoe UI", 10), bg="white", fg="#64748b").pack(pady=(0, 20))
+
+        frame_controles = tk.Frame(frame_fondo, bg="white")
+        frame_controles.pack(pady=10)
+
+        tk.Label(frame_controles, text="1. Selecciona el Autómata:", font=("Segoe UI", 10, "bold"), bg="white").grid(
+            row=0, column=0, padx=10, pady=10, sticky="e")
+        self.combo_autómatas = ttk.Combobox(frame_controles, values=list(self.validadores_instancias.keys()),
+                                            state="readonly", width=30, font=("Segoe UI", 10))
+        self.combo_autómatas.current(0)
+        self.combo_autómatas.grid(row=0, column=1, padx=10, pady=10)
+
+        tk.Label(frame_controles, text="2. Ingresa la cadena a evaluar:", font=("Segoe UI", 10, "bold"),
+                 bg="white").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+        self.entrada_tester = tk.Entry(frame_controles, font=("Consolas", 12), width=32, bg="#f8fafc", relief="solid",
+                                       borderwidth=1)
+        self.entrada_tester.grid(row=1, column=1, padx=10, pady=10, ipady=4)
+
+        ttk.Button(frame_controles, text="⚙️ Validar Cadena y Diagnosticar",
+                   command=self.ejecutar_prueba_individual).grid(row=2, column=0, columnspan=2, pady=20)
+
+        # La etiqueta de resultados ahora justificará el texto a la izquierda para las listas de errores
+        self.lbl_resultado_tester = tk.Label(frame_fondo, text="Esperando entrada...", font=("Segoe UI", 12),
+                                             bg="white", fg="#94a3b8", justify="left")
+        self.lbl_resultado_tester.pack(pady=10)
+
+    def obtener_diagnostico_error(self, nombre_validador, texto):
+        """Genera un listado de los posibles motivos por los que el formato falló en el autómata."""
+        errores = []
+        if nombre_validador == "Correo de Contacto":
+            if "@" not in texto: errores.append("Falta el símbolo '@'")
+            if "." not in texto: errores.append("Falta un punto de dominio (ej. .com)")
+            if texto.startswith("@") or texto.endswith("@"): errores.append("Estructura inválida alrededor del '@'")
+            if not errores: errores.append("Caracteres no permitidos o no se detectó el dominio")
+
+        elif nombre_validador == "Contraseñas Seguras":
+            if len(texto) < 8: errores.append(f"Longitud insuficiente (faltan {8 - len(texto)} caracteres)")
+            if not any(c.isupper() for c in texto): errores.append("Falta al menos una letra mayúscula")
+            if not any(c.isdigit() for c in texto): errores.append("Falta al menos un número")
+            if not any(not c.isalnum() for c in texto): errores.append("Falta un carácter especial (ej. !@#$)")
+
+        elif nombre_validador == "Fechas":
+            if len(texto) < 8: errores.append("Longitud insuficiente")
+            if not ("/" in texto or "-" in texto or "." in texto): errores.append("Falta un separador válido (/, -, .)")
+            if not errores: errores.append(
+                "Los separadores están mezclados o la estructura de dígitos (DD/MM/AAAA) es inválida")
+
+        elif nombre_validador == "Placas de Vehículo":
+            if len(texto) < 6: errores.append(f"Faltan caracteres (Tiene {len(texto)}, deben ser 6)")
+            if len(texto) > 6: errores.append("Sobran caracteres (Deben ser exactamente 6)")
+            if len(texto) >= 3 and not texto[:3].isalpha(): errores.append(
+                "Los primeros 3 caracteres deben ser letras obligatoriamente")
+            if not errores: errores.append("Estructura no corresponde al Autómata de Auto (LLLNNN) o Moto (LLLNNL)")
+
+        elif nombre_validador == "Teléfonos":
+            if not texto.isdigit(): errores.append("Contiene caracteres no numéricos o espacios en blanco")
+            if len(texto) < 10: errores.append(f"Faltan dígitos (Tiene {len(texto)}, deben ser 10)")
+            if len(texto) > 10: errores.append(f"Excede los 10 dígitos obligatorios (Tiene {len(texto)})")
+
+        elif nombre_validador == "URLs":
+            if " " in texto: errores.append("La URL no debe contener espacios")
+            if "." not in texto: errores.append("Falta el punto separador del dominio")
+            if not errores: errores.append("El protocolo, el dominio principal o la extensión están malformados")
+
+        elif nombre_validador == "Direcciones IP":
+            bloques = texto.split(".")
+            if len(bloques) != 4: errores.append(
+                f"Debe tener exactamente 4 bloques separados por puntos (tiene {len(bloques)})")
+            for b in bloques:
+                if not b.isdigit():
+                    errores.append(f"El bloque '{b}' contiene caracteres inválidos")
+                elif int(b) > 255:
+                    errores.append(f"El bloque '{b}' excede el límite matemático de red (255)")
+
+        elif nombre_validador == "Valores Monetarios":
+            if not texto.startswith("$"): errores.append("Debe iniciar obligatoriamente con el símbolo '$'")
+            if not errores: errores.append("El formato de separadores de miles (.) o decimales (,) es incorrecto")
+
+        elif nombre_validador == "Identidad (CC/NIT)":
+            if len(texto) < 6: errores.append("La longitud es muy corta para ser Cédula o NIT")
+            if "-" in texto and len(texto.split("-")[1]) != 1: errores.append(
+                "El formato NIT exige exactamente 1 dígito de verificación tras el guión")
+            if not errores: errores.append("No cumple el patrón de transición ni para Cédula (hasta 10 dígitos) ni NIT")
+
+        return "\n".join([f"• {err}" for err in errores])
+
+    def ejecutar_prueba_individual(self):
+        nombre_validador = self.combo_autómatas.get()
+        cadena = self.entrada_tester.get()
+
+        if not cadena:
+            self.lbl_resultado_tester.config(text="⚠️ Por favor ingresa una cadena en el campo de texto", fg="#f59e0b",
+                                             font=("Segoe UI", 12, "bold"))
+            return
+
+        automata = self.validadores_instancias[nombre_validador]
+        es_valido = automata.validar(cadena)
+
+        if es_valido:
+            self.lbl_resultado_tester.config(
+                text=f"✅ ACEPTADO:\nLa cadena '{cadena}' pertenece al lenguaje formal y fue aceptada por el autómata.",
+                fg="#10b981", font=("Segoe UI", 12, "bold")
+            )
+        else:
+            # Ahora llamamos a nuestra nueva función de diagnóstico
+            diagnostico = self.obtener_diagnostico_error(nombre_validador, cadena)
+            mensaje_rechazo = f"❌ RECHAZADO:\nLa cadena '{cadena}' no es válida. Motivos probables detectados:\n\n{diagnostico}"
+            self.lbl_resultado_tester.config(
+                text=mensaje_rechazo,
+                fg="#ef4444", font=("Segoe UI", 11, "normal")
+            )
+
     def cargar_archivo(self):
-        """Abre un cuadro de diálogo para seleccionar un archivo de texto y carga su contenido."""
         ruta_archivo = filedialog.askopenfilename(
-            title="Seleccionar archivo de texto",
-            filetypes=(("Archivos de texto", "*.txt"), ("Todos los archivos", "*.*"))
-        )
-
+            filetypes=(("Archivos de texto", "*.txt"), ("Todos los archivos", "*.*")))
         if ruta_archivo:
-            try:
-                # Abrimos el archivo especificando la codificación UTF-8 para evitar problemas con tildes y ñ
-                with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
-                    contenido = archivo.read()
-
-                # Limpiamos la caja de texto actual e insertamos el nuevo contenido
+            with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
                 self.txt_entrada.delete("1.0", tk.END)
-                self.txt_entrada.insert(tk.END, contenido)
-
-            except Exception as e:
-                messagebox.showerror("Error de lectura", f"No se pudo leer el archivo.\nDetalle: {str(e)}")
+                self.txt_entrada.insert(tk.END, archivo.read())
 
     def procesar_texto(self):
-        """Toma el texto de entrada, lo pasa por los autómatas y muestra el resultado."""
-        # Obtenemos todo el texto desde la primera línea (1.0) hasta el final (tk.END)
         texto = self.txt_entrada.get("1.0", tk.END)
-
-        # Ejecutamos nuestra lógica de análisis léxico
         resultados = self.escaner.extraer_patrones(texto)
-
-        # Habilitamos la caja de salida para poder escribir en ella
         self.txt_salida.config(state='normal')
-        self.txt_salida.delete("1.0", tk.END)  # Limpiamos resultados anteriores
-
-        # Escribimos los nuevos resultados iterando el diccionario
+        self.txt_salida.delete("1.0", tk.END)
         for categoria, coincidencias in resultados.items():
             if coincidencias:
-                linea = f"✅ {categoria}: {', '.join(coincidencias)}\n"
+                self.txt_salida.insert(tk.END, f"✅ {categoria}: {', '.join(coincidencias)}\n")
             else:
-                linea = f"❌ {categoria}: Ninguna coincidencia\n"
-
-            self.txt_salida.insert(tk.END, linea)
-
-        # Volvemos a deshabilitar la caja para que el usuario no pueda editar los resultados
+                self.txt_salida.insert(tk.END, f"❌ {categoria}: No detectado en el documento\n")
         self.txt_salida.config(state='disabled')
-
-    def construir_tab_formularios(self):
-        frame_fondo = tk.Frame(self.tab_formularios, bg="#ffffff")
-        frame_fondo.pack(fill='both', expand=True, padx=20, pady=20)
-
-        lbl_info = tk.Label(frame_fondo, text="Validación de Entradas en Tiempo Real",
-                            font=("Segoe UI", 16, "bold"), bg="#ffffff", fg="#1f2937")
-        lbl_info.pack(pady=(20, 5))
-
-        lbl_sub = tk.Label(frame_fondo,
-                           text="Ingresa los datos a continuación. El sistema verificará su estructura automáticamente.",
-                           font=("Segoe UI", 10), bg="#ffffff", fg="#6b7280")
-        lbl_sub.pack(pady=(0, 20))
-
-        self.frame_campos = tk.Frame(frame_fondo, bg="#ffffff")
-        self.frame_campos.pack(fill='both', expand=True, padx=40, pady=10)
-
-        self.formulario = FormularioValidacion(self.frame_campos)
 
 
 if __name__ == "__main__":

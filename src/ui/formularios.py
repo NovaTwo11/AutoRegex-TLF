@@ -9,7 +9,7 @@ from src.automata.validadores.validador_fecha import ValidadorFecha
 from src.automata.validadores.validador_placa import ValidadorPlaca
 
 
-class FormularioValidacion:
+class FormularioRegistroCliente:
     def __init__(self, parent_frame):
         self.parent = parent_frame
 
@@ -21,115 +21,132 @@ class FormularioValidacion:
             "placa": ValidadorPlaca()
         }
 
-        # Nombres amigables para el cuadro de diálogo de errores
+        # Nombres contextualizados al sistema de Car Rental
         self.nombres_campos = {
-            "correo": "Correo Electrónico",
-            "password": "Contraseña Segura",
-            "telefono": "Teléfono Móvil",
-            "fecha": "Fecha de Nacimiento",
-            "placa": "Placa de Vehículo"
+            "correo": "Correo de Notificaciones",
+            "password": "Clave del Portal Cliente",
+            "telefono": "Móvil de Contacto",
+            "fecha": "Fecha de Inicio de Reserva",
+            "placa": "Placa del Vehículo a Alquilar"
         }
 
         # Diccionario para rastrear el estado exacto de cada campo
-        self.estado_campos = {k: {"valido": False, "mensaje": "El campo está vacío"} for k in self.motores.keys()}
+        self.estado_campos = {k: {"valido": False, "mensaje": "Requerido para la reserva"} for k in self.motores.keys()}
 
         self.construir_campos()
 
     def construir_campos(self):
-        self.parent.columnconfigure(1, weight=1)
+        # Marco central para alinear bien los elementos
+        frame_grid = tk.Frame(self.parent, bg="white")
+        frame_grid.pack(expand=True)
 
         campos_info = [
-            ("correo", "Correo Electrónico:", "ejemplo@dominio.com"),
-            ("password", "Contraseña Segura:", "Mín 8 carácteres, 1 Mayús, 1 Núm, 1 Esp"),
-            ("telefono", "Teléfono Móvil:", "10 dígitos"),
-            ("fecha", "Fecha de Nacimiento:", "DD/MM/AAAA o DD-MM-AAAA"),
-            ("placa", "Placa de Vehículo:", "Autos (ABC123) o Motos (ABC12D)")
+            ("correo", "Correo de Notificaciones:", "ejemplo@dominio.com"),
+            ("password", "Clave del Portal Cliente:", "Mín 8 chars, 1 Mayús, 1 Núm, 1 Esp"),
+            ("telefono", "Móvil de Contacto:", "10 dígitos exactos"),
+            ("fecha", "Fecha de Inicio de Reserva:", "DD/MM/AAAA o DD-MM-AAAA"),
+            ("placa", "Placa de Vehículo a Alquilar:", "Auto (ABC123) o Moto (ABC12D)")
         ]
 
         self.entradas = {}
         self.etiquetas_estado = {}
 
-        for i, (identificador, texto_etiqueta, ayuda) in enumerate(campos_info):
-            lbl = tk.Label(self.parent, text=texto_etiqueta, font=("Segoe UI", 10, "bold"),
-                           bg="#ffffff", fg="#1f2937", anchor="e")
-            lbl.grid(row=i, column=0, sticky="e", pady=15, padx=(0, 10))
+        for i, (id_campo, label_txt, ayuda) in enumerate(campos_info):
+            # Etiquetas de los campos
+            tk.Label(frame_grid, text=label_txt, font=("Segoe UI", 10, "bold"),
+                     bg="white", fg="#334155", anchor="e").grid(row=i, column=0, sticky="e", pady=12, padx=(0, 15))
 
             var_texto = tk.StringVar()
-            var_texto.trace_add("write", lambda name, index, mode, id_campo=identificador,
-                                                var=var_texto: self.validar_campo(id_campo, var))
+            var_texto.trace_add("write", lambda n, i_x, m, id_c=id_campo, v=var_texto: self.validar_campo(id_c, v))
 
-            entry = tk.Entry(self.parent, textvariable=var_texto, font=("Segoe UI", 11),
-                             bg="#f9fafb", relief="flat", highlightthickness=1,
-                             highlightbackground="#d1d5db")
-            entry.grid(row=i, column=1, sticky="we", pady=15, ipady=5)
+            # Entry más estético y corporativo
+            entry = tk.Entry(frame_grid, textvariable=var_texto, font=("Segoe UI", 11),
+                             bg="#f8fafc", width=30, relief="solid", borderwidth=1)
+            entry.grid(row=i, column=1, sticky="w", pady=12, ipady=4)
 
-            lbl_estado = tk.Label(self.parent, text=f"Formato: {ayuda}",
-                                  font=("Segoe UI", 9, "italic"), bg="#ffffff",
-                                  fg="#9ca3af", width=35, anchor="w")
-            lbl_estado.grid(row=i, column=2, sticky="w", pady=15, padx=(10, 0))
+            # Etiqueta de estado/ayuda
+            lbl_estado = tk.Label(frame_grid, text=ayuda, font=("Segoe UI", 9),
+                                  bg="white", fg="#94a3b8", width=35, anchor="w")
+            lbl_estado.grid(row=i, column=2, sticky="w", pady=12, padx=(15, 0))
 
-            self.entradas[identificador] = entry
-            self.etiquetas_estado[identificador] = lbl_estado
+            self.entradas[id_campo] = entry
+            self.etiquetas_estado[id_campo] = lbl_estado
 
-        self.btn_enviar = ttk.Button(self.parent, text="Validar y Enviar Datos",
-                                     command=self.simular_envio)
-        self.btn_enviar.grid(row=len(campos_info), column=1, sticky="e", pady=30)
+        # Botón de acción principal
+        btn_enviar = tk.Button(frame_grid, text="Autorizar Reserva de Vehículo",
+                               font=("Segoe UI", 11, "bold"), bg="#10b981", fg="white",
+                               activebackground="#059669", activeforeground="white",
+                               relief="flat", padx=20, pady=8, command=self.simular_envio)
+        btn_enviar.grid(row=len(campos_info), column=0, columnspan=3, pady=30)
 
-    def obtener_recomendacion(self, identificador, texto):
+    def obtener_recomendacion(self, id_campo, texto):
         """Analiza la cadena para dar retroalimentación específica al usuario cuando el autómata la rechaza."""
-        if identificador == "correo":
+        if id_campo == "correo":
             if "@" not in texto: return "✗ Falta el símbolo '@'"
             if "." not in texto.split("@")[-1]: return "✗ Falta el dominio (ej. .com)"
-            return "✗ Estructura de correo incompleta"
+            return "✗ Formato de correo corporativo inválido"
 
-        elif identificador == "password":
+        elif id_campo == "password":
             if len(texto) < 8: return f"✗ Faltan {8 - len(texto)} caracteres mínimos"
             if not any(c.isupper() for c in texto): return "✗ Falta al menos una letra mayúscula"
             if not any(c.isdigit() for c in texto): return "✗ Falta al menos un número"
             if not any(not c.isalnum() for c in texto): return "✗ Falta un carácter especial (ej. !@#$)"
-            return "✗ Contraseña inválida"
+            return "✗ No cumple política de seguridad del portal"
 
-        elif identificador == "telefono":
+        elif id_campo == "telefono":
             if not texto.isdigit(): return "✗ Solo debe contener números"
             if len(texto) < 10: return f"✗ Faltan {10 - len(texto)} dígitos"
             if len(texto) > 10: return "✗ Sobran dígitos, deben ser 10 exactos"
-            return "✗ Número inválido"
+            return "✗ El móvil debe tener 10 dígitos sin espacios"
 
-        elif identificador == "fecha":
+        elif id_campo == "fecha":
             if len(texto) < 8: return "✗ Fecha muy corta o incompleta"
-            return "✗ Formato inválido o separadores mixtos"
+            return "✗ Formato cronológico inválido"
 
-        elif identificador == "placa":
+        elif id_campo == "placa":
             if len(texto) < 6: return "✗ Faltan caracteres para la placa"
-            return "✗ Estructura no coincide con Auto ni Moto"
+            return "✗ Placa no reconocida en el inventario (Auto/Moto)"
 
         return "✗ Formato inválido"
 
-    def validar_campo(self, identificador, var_texto):
+    def validar_campo(self, id_campo, var_texto):
         texto = var_texto.get()
-        entry = self.entradas[identificador]
-        lbl_estado = self.etiquetas_estado[identificador]
+        entry = self.entradas[id_campo]
+        lbl_estado = self.etiquetas_estado[id_campo]
 
         if not texto:
-            entry.config(highlightbackground="#d1d5db", highlightcolor="#4f46e5")
-            lbl_estado.config(text="Campo vacío", fg="#9ca3af")
-            self.estado_campos[identificador] = {"valido": False, "mensaje": "El campo está vacío"}
+            entry.config(highlightbackground="#d1d5db", highlightcolor="#2563eb")
+            lbl_estado.config(text="Requerido para la reserva", fg="#94a3b8", font=("Segoe UI", 9, "normal"))
+            self.estado_campos[id_campo] = {"valido": False, "mensaje": "Campo vacío"}
             return
 
         # El autómata determina la validez oficial
-        es_valido = self.motores[identificador].validar(texto)
+        es_valido = self.motores[id_campo].validar(texto)
 
         if es_valido:
             entry.config(highlightbackground="#10b981", highlightcolor="#10b981")
-            lbl_estado.config(text="✓ Formato válido", fg="#10b981", font=("Segoe UI", 9, "bold"))
-            self.estado_campos[identificador] = {"valido": True, "mensaje": ""}
+
+            # --- LÓGICA DE NEGOCIO BASADA EN ESTADOS DEL AUTÓMATA ---
+            mensaje_exito = "✓ Dato verificado"
+
+            if id_campo == "placa":
+                estado_final = self.motores["placa"].estado_actual
+                if estado_final == 6:
+                    # El autómata se detuvo en estado de Aceptación 6 (Auto)
+                    mensaje_exito = "✓ Vehículo: Auto - Tarifa: $150.000/día"
+                elif estado_final == 7:
+                    # El autómata se detuvo en estado de Aceptación 7 (Moto)
+                    mensaje_exito = "✓ Vehículo: Moto - Tarifa: $60.000/día"
+
+            lbl_estado.config(text=mensaje_exito, fg="#10b981", font=("Segoe UI", 9, "bold"))
+            self.estado_campos[id_campo] = {"valido": True, "mensaje": ""}
         else:
             entry.config(highlightbackground="#ef4444", highlightcolor="#ef4444")
             # Obtenemos la pista visual para el usuario
-            recomendacion = self.obtener_recomendacion(identificador, texto)
+            recomendacion = self.obtener_recomendacion(id_campo, texto)
             lbl_estado.config(text=recomendacion, fg="#ef4444", font=("Segoe UI", 9, "normal"))
             # Guardamos el mensaje (quitando la "✗ ") para el reporte final
-            self.estado_campos[identificador] = {"valido": False, "mensaje": recomendacion.replace("✗ ", "")}
+            self.estado_campos[id_campo] = {"valido": False, "mensaje": recomendacion.replace("✗ ", "")}
 
     def simular_envio(self):
         """Genera un reporte final consolidado de los errores."""
@@ -143,10 +160,10 @@ class FormularioValidacion:
                 errores_encontrados.append(f"• {nombre}: {mensaje}")
 
         if len(errores_encontrados) == 0:
-            messagebox.showinfo("Proceso Exitoso",
-                                "Todos los datos cumplen con la estructura sintáctica y fueron aceptados por los autómatas.")
+            messagebox.showinfo("Reserva Aprobada",
+                                "Todos los datos de contacto, facturación y placa vehicular han sido validados exitosamente en la plataforma.")
         else:
             # Unimos todos los errores con saltos de línea
-            reporte_errores = "No se puede enviar el formulario. Corrige los siguientes puntos:\n\n" + "\n".join(
+            reporte_errores = "La plataforma ha rechazado el registro por las siguientes inconsistencias en la base de datos:\n\n" + "\n".join(
                 errores_encontrados)
-            messagebox.showwarning("Errores de Validación", reporte_errores)
+            messagebox.showwarning("Auditoría de Registro Fallida", reporte_errores)
