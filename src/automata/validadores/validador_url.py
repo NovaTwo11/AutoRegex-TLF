@@ -107,7 +107,8 @@ class ValidadorURL(AutomataBase):
 
         elif self.estado_actual == 10:
             # Estado de aceptación (ej. leyendo 'com' o 'co')
-            if caracter.isalnum() or caracter == '-':
+            # Ahora permitimos '/' para rutas y otros caracteres comunes en URLs
+            if caracter.isalnum() or caracter in ['-', '_', '/', '?', '=', '&', '%']:
                 self.estado_actual = 10
             elif caracter == '.':
                 # Si hay otro punto (ej. com.co), vuelve al estado 9 para esperar más texto

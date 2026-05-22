@@ -57,8 +57,8 @@ class AutoRegexApp:
             "Fechas": ValidadorFecha(),
             "Placas de Vehículo": ValidadorPlaca(),
             "Teléfonos": ValidadorTelefono(),
-            "URLs": ValidadorURL(),
             "Direcciones IP": ValidadorIP(),
+            "URLs": ValidadorURL(),
             "Valores Monetarios": ValidadorMoneda(),
             "Identidad (CC/NIT)": ValidadorDocumentoNIT()
         }

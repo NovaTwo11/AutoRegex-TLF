@@ -1,46 +1,44 @@
 class EscanerTexto:
     """
-    Analizador léxico que recorre un texto para extraer los patrones
-    usando los autómatas definidos, sin usar librerías de regex.
+    Representa un analizador léxico diseñado para procesar secuencias de texto, extraer
+    y clasificar patrones estructurales mediante la evaluación concurrente de múltiples
+    autómatas finitos, operando sin dependencias de motores de expresiones regulares externos.
     """
 
     def __init__(self, diccionario_validadores):
-        # Recibe un diccionario con las instancias de los validadores
-        # Ej: {'Correos': ValidadorCorreo(), 'Fechas': ValidadorFecha()}
+        """
+        Inicializa el analizador léxico inyectando un diccionario de instancias de autómatas validadores.
+        """
         self.validadores = diccionario_validadores
 
     def limpiar_token(self, token):
         """
-        Elimina signos de puntuación al inicio y al final de la palabra
-        para evitar que interfieran con la validación del autómata.
+        Elimina los signos de puntuación situados en los extremos del token proporcionado
+        para evitar interferencias estructurales durante la evaluación en los autómatas.
         """
-        # Se pueden agregar más caracteres si es necesario
         caracteres_puntuacion = '.,;:"\'()[]{}<>!?'
         return token.strip(caracteres_puntuacion)
 
     def extraer_patrones(self, texto):
         """
-        Escanea el texto y clasifica las coincidencias.
-        Retorna un diccionario con los resultados.
+        Ejecuta el proceso de escaneo léxico sobre la cadena de entrada. Aplica tokenización
+        por espacios, limpieza de caracteres periféricos y clasifica cada token válido iterando
+        sobre el conjunto de autómatas registrados.
+
+        Retorna un diccionario estructurado con las clasificaciones resultantes.
         """
-        # Inicializamos el diccionario de resultados
         resultados = {clave: [] for clave in self.validadores.keys()}
 
-        # Tokenización: separamos el texto por espacios/saltos de línea
         tokens = texto.split()
 
         for token in tokens:
             token_limpio = self.limpiar_token(token)
 
-            # Si el token quedó vacío tras la limpieza, lo saltamos
             if not token_limpio:
                 continue
 
-            # Evaluamos el token en cada autómata
-            for nombre_patron, autómata in self.validadores.items():
-                if autómata.validar(token_limpio):
-                    # Si el autómata lo acepta, lo guardamos y rompemos el ciclo
-                    # (asumiendo que un token no pertenece a dos categorías a la vez)
+            for nombre_patron, automata in self.validadores.items():
+                if automata.validar(token_limpio):
                     resultados[nombre_patron].append(token_limpio)
                     break
 
